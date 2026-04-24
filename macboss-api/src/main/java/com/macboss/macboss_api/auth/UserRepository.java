@@ -1,0 +1,14 @@
+package com.macboss.macboss_api.auth;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+import java.util.Optional;
+import java.util.UUID;
+
+@Repository
+public interface UserRepository extends JpaRepository<User, UUID> {
+    
+    // O Spring gera o "SELECT * FROM users WHERE email = ?" automaticamente!
+    Optional<User> findByEmail(String email);
+    
+}

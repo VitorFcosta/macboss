@@ -1,0 +1,39 @@
+spring:
+  application:
+    name: macboss-api
+    
+  # Conexão com o PostgreSQL do Docker
+  datasource:
+    url: jdbc:postgresql://localhost:5432/${DB_NAME:macboss_db}
+    username: ${DB_USER:macboss_user}
+    password: ${DB_PASS:macboss_admin123}
+    
+  # Configuração do JPA (Mapeamento Objeto-Relacional)
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        
+  # Conexão com o Redis do Docker
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      
+  # Controle de versão do Banco de Dados
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+
+# Regra de Segurança da nossa Auditoria (Apenas Health Check visível)
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always

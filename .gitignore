@@ -1,0 +1,8 @@
+# Segurança
+.env
+.env.*
+
+# Pastas de IDEs e SO
+.idea/
+.vscode/
+.DS_Store
