@@ -37,3 +37,6 @@ management:
   endpoint:
     health:
       show-details: always
+jwt:
+  secret: ${JWT_SECRET:CHAVE_DE_DESENVOLVIMENTO_GIGANTE_E_SEGURA_DO_MACBOSS_MINIMO_256_BITS}
+  expiration: 86400000 # 24 horas
