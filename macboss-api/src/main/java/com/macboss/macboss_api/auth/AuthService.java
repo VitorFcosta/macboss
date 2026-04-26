@@ -1,33 +1,37 @@
 package com.macboss.macboss_api.auth;
 
-// (PASSO 1) Importamos a nossa "Bandeja"
 import com.macboss.macboss_api.auth.dto.AuthResponseDTO;
 import com.macboss.macboss_api.auth.dto.RegisterRequestDTO;
 import com.macboss.macboss_api.auth.dto.UserResponseDTO;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.ZonedDateTime;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    
-    // Trazemos a máquina de pulseiras (JwtService) pra dentro da Cozinha
     private final JwtService jwtService; 
+    
+    // Ferramenta que fala com o Redis
+    private final StringRedisTemplate redisTemplate; 
 
-    // O Spring injeta as ferramentas automaticamente aqui dentro
-    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtService jwtService) {
+    public AuthService(UserRepository userRepository, 
+                       PasswordEncoder passwordEncoder, 
+                       JwtService jwtService,
+                       StringRedisTemplate redisTemplate) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.redisTemplate = redisTemplate;
     }
 
     @Transactional
-    // Avisamos que agora o método devolve a "Bandeja" inteira (AuthResponseDTO)
     public AuthResponseDTO register(RegisterRequestDTO dto, String ipAddress) {
         
         if (userRepository.findByEmail(dto.email()).isPresent()) {
@@ -47,10 +51,8 @@ public class AuthService {
 
         User savedUser = userRepository.save(newUser);
 
-        // Fabricamos a pulseira JWT!
         String token = jwtService.generateToken(savedUser);
 
-        // Empacotamos os dados do usuário (Sem a senha, por segurança)
         UserResponseDTO userResponse = new UserResponseDTO(
                 savedUser.getId(),
                 savedUser.getName(),
@@ -58,20 +60,39 @@ public class AuthService {
                 savedUser.getRole().name()
         );
 
-        // Colocamos o usuário e o token juntos na Bandeja e devolvemos pro Garçom!
         return new AuthResponseDTO(userResponse, token);
     }
+
     public AuthResponseDTO login(com.macboss.macboss_api.auth.dto.LoginRequestDTO dto) {
         
+        // ESCUDO ANTI-FORÇA BRUTA: Checa no Redis se a pessoa já errou a senha 5 vezes
+        String redisKey = "login_attempts:" + dto.email();
+        String attemptsStr = redisTemplate.opsForValue().get(redisKey);
+        
+        if (attemptsStr != null && Integer.parseInt(attemptsStr) >= 5) {
+            throw new IllegalArgumentException("Conta temporariamente bloqueada por segurança. Tente novamente em 15 minutos.");
+        }
+
         // Tenta achar o usuário pelo e-mail
         User user = userRepository.findByEmail(dto.email())
                 .orElseThrow(() -> new IllegalArgumentException("E-mail ou senha incorretos."));
 
         // Compara a senha digitada com a criptografia salva no banco
         boolean isPasswordCorrect = passwordEncoder.matches(dto.password(), user.getPasswordHash());
+        
         if (!isPasswordCorrect) {
+            //ERROU A SENHA! Vamos anotar esse erro no Redis
+            Long newAttempts = redisTemplate.opsForValue().increment(redisKey);
+            
+            // Se foi o primeiro erro da pessoa, a gente configura o prazo de 15 minutos de bloqueio
+            if (newAttempts != null && newAttempts == 1) {
+                redisTemplate.expire(redisKey, 15, TimeUnit.MINUTES);
+            }
             throw new IllegalArgumentException("E-mail ou senha incorretos."); 
         }
+
+        // Vamos perdoar os erros apagando o registro do Redis
+        redisTemplate.delete(redisKey);
 
         // Tudo certo! Fabrica uma nova pulseira
         String token = jwtService.generateToken(user);
@@ -87,5 +108,4 @@ public class AuthService {
         // Devolve na mesma Bandeja!
         return new AuthResponseDTO(userResponse, token);
     }
-
 }
