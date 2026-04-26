@@ -39,10 +39,25 @@ public class AuthController {
         HttpCookie authCookie = cookieService.createAuthCookie(responseTray.jwt());
 
         // Devolve a resposta pro React:
-        // O Cofre (Cookie) vai escondido no Cabeçalho (Header: SET_COOKIE)
+        // O Cookie vai escondido no Cabeçalho (Header: SET_COOKIE)
         // Os dados do Usuário vão abertos no Corpo (Body)
         return ResponseEntity.status(HttpStatus.CREATED)
                 .header(HttpHeaders.SET_COOKIE, authCookie.toString())
                 .body(responseTray.user());
     }
+    @PostMapping("/login")
+    public ResponseEntity<UserResponseDTO> login(@Valid @RequestBody com.macboss.macboss_api.auth.dto.LoginRequestDTO request) {
+        
+        // Manda a Cozinha processar o Login e recebe a Bandeja
+        AuthResponseDTO responseTray = authService.login(request);
+
+        // Pega a pulseira nova e tranca no Cofre (Cookie)
+        org.springframework.http.HttpCookie authCookie = cookieService.createAuthCookie(responseTray.jwt());
+
+        // Devolve exatamente da mesma forma: Cookie no Cabeçalho e Usuário no Corpo
+        return ResponseEntity.status(org.springframework.http.HttpStatus.OK) // Status 200 OK 
+                .header(org.springframework.http.HttpHeaders.SET_COOKIE, authCookie.toString())
+                .body(responseTray.user());
+    }
+
 }
