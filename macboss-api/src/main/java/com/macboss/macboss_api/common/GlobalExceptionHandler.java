@@ -17,4 +17,18 @@ public class GlobalExceptionHandler {
         response.put("error", ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
+    //Captura os erros de Validação dos DTOs (as tags @NotBlank, @AssertTrue, @Email, etc)
+    @ExceptionHandler(org.springframework.web.bind.MethodArgumentNotValidException.class)
+    public ResponseEntity<java.util.Map<String, String>> handleValidationExceptions(org.springframework.web.bind.MethodArgumentNotValidException ex) {
+        
+        java.util.Map<String, String> errors = new java.util.HashMap<>();
+        
+        // Vasculha todos os campos que deram erro e extrai a mensagem exata deles para o JSON!
+        ex.getBindingResult().getFieldErrors().forEach(error -> 
+            errors.put(error.getField(), error.getDefaultMessage())
+        );
+        
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
+    }
+
 }
