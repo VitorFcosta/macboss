@@ -26,4 +26,15 @@ public class CookieService {
                 .sameSite("Strict") // Impede que outro site tente usar esse cookie (Proteção CSRF)
                 .build();
     }
+
+    public HttpCookie clearAuthCookie() {
+        return ResponseCookie.from("macboss_token", "") // Deixa o valor vazio
+                .httpOnly(true)
+                .secure(false)
+                .path("/")
+                .maxAge(Duration.ZERO)
+                .sameSite("Strict")
+                .build();
+    }
+
 }

@@ -32,4 +32,39 @@ public class JwtService {
                 .signWith(secretKey) 
                 .compact(); 
     }
+
+    //  Extrai o ID do Usuário (que guardamos no Subject)
+    public String extractUserId(String token) {
+        return Jwts.parser()
+                .verifyWith(secretKey)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .getSubject();
+    }
+
+    //  Extrai a Role do Usuário (CUSTOMER ou ADMIN)
+    public String extractRole(String token) {
+        return Jwts.parser()
+                .verifyWith(secretKey)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .get("role", String.class);
+    }
+
+    //  Verifica se a pulseira é falsa ou se já venceu
+    public boolean isTokenValid(String token) {
+        try {
+            Jwts.parser()
+                .verifyWith(secretKey)
+                .build()
+                .parseSignedClaims(token);
+            return true; // Se não deu erro, a pulseira é válida!
+        } catch (Exception e) {
+            return false; // Pulseira falsa, vencida ou corrompida.
+        }
+    }
+
+    
 }

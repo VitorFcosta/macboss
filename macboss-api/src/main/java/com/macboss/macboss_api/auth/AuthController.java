@@ -59,5 +59,17 @@ public class AuthController {
                 .header(org.springframework.http.HttpHeaders.SET_COOKIE, authCookie.toString())
                 .body(responseTray.user());
     }
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout() {
+        
+        // Pede a ordem de destruição do Cookie para o CookieService
+        org.springframework.http.HttpCookie clearCookie = cookieService.clearAuthCookie();
+
+        // Responde com o status 204 No Content (Tudo certo, não há corpo na resposta) 
+        // e o cookie vazio no cabeçalho para sobrescrever o antigo.
+        return ResponseEntity.status(org.springframework.http.HttpStatus.NO_CONTENT)
+                .header(org.springframework.http.HttpHeaders.SET_COOKIE, clearCookie.toString())
+                .build();
+    }
 
 }

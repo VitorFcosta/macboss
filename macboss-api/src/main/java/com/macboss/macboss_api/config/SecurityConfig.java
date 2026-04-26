@@ -14,12 +14,12 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http, com.macboss.macboss_api.auth.JwtAuthFilter jwtAuthFilter) throws Exception {
         http
-            // Desabilita CSRF porque usaremos Cookies JWT com SameSite=Strict mais pra frente
+            // Desabilita CSRF porque usaremos Cookies JWT com SameSite=Strict
             .csrf(csrf -> csrf.disable())
             
-            // A API não vai guardar memória de quem logou (Stateless). O Cookie JWT fará isso.
+            // A API não vai guardar memória de quem logou (Stateless)
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             
             // Regras de acesso às rotas
@@ -27,10 +27,13 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/auth/**").permitAll() // Libera acesso público ao Cadastro e Login
                 .requestMatchers("/actuator/health").permitAll() // Libera verificação de saúde do sistema
                 .anyRequest().authenticated() // Exige login para todas as outras rotas!
-            );
+            )
+            // Coloca o nosso Segurança (JwtAuthFilter) na frente da porta!
+            .addFilterBefore(jwtAuthFilter, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
+
 
     @Bean
     public PasswordEncoder passwordEncoder() {
