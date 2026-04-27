@@ -111,6 +111,11 @@
 			<artifactId>bucket4j-core</artifactId>
 			<version>8.10.1</version>
 		</dependency>
+		<dependency>
+			<groupId>me.paulschwarz</groupId>
+			<artifactId>spring-dotenv</artifactId>
+			<version>4.0.0</version>
+		</dependency>
 
 	</dependencies>
 
@@ -120,6 +125,9 @@
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 				<configuration>
+					<systemPropertyVariables>
+						<spring.dotenv.directory>../</spring.dotenv.directory>
+					</systemPropertyVariables>
 					<excludes>
 						<exclude>
 							<groupId>org.projectlombok</groupId>
