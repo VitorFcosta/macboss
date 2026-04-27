@@ -18,58 +18,79 @@ public class AuthController {
     private final AuthService authService;
     private final CookieService cookieService; 
 
-    // O Spring injeta os dois serviços aqui automaticamente
     public AuthController(AuthService authService, CookieService cookieService) {
         this.authService = authService;
         this.cookieService = cookieService;
     }
 
     @PostMapping("/register")
-    // continuamos devolvendo SÓ o UserResponseDTO no corpo da resposta
     public ResponseEntity<UserResponseDTO> register(
             @Valid @RequestBody RegisterRequestDTO request,
-            HttpServletRequest httpRequest
+            jakarta.servlet.http.HttpServletRequest httpRequest
     ) {
         String ipAddress = httpRequest.getRemoteAddr();
-
-        // Manda a Cozinha trabalhar e recebe a Bandeja com as duas coisas
         AuthResponseDTO responseTray = authService.register(request, ipAddress);
 
-        // Pega só a pulseira que veio na Bandeja e tranca no Cofre (Cookie)
-        HttpCookie authCookie = cookieService.createAuthCookie(responseTray.jwt());
+        // Tranca as DUAS pulseiras nos seus respectivos cofres
+        HttpCookie accessCookie = cookieService.createAccessTokenCookie(responseTray.accessToken());
+        HttpCookie refreshCookie = cookieService.createRefreshTokenCookie(responseTray.refreshToken());
 
-        // Devolve a resposta pro React:
-        // O Cookie vai escondido no Cabeçalho (Header: SET_COOKIE)
-        // Os dados do Usuário vão abertos no Corpo (Body)
         return ResponseEntity.status(HttpStatus.CREATED)
-                .header(HttpHeaders.SET_COOKIE, authCookie.toString())
+                .header(HttpHeaders.SET_COOKIE, accessCookie.toString())
+                .header(HttpHeaders.SET_COOKIE, refreshCookie.toString()) // Adiciona o segundo cookie na resposta!
                 .body(responseTray.user());
     }
+
     @PostMapping("/login")
     public ResponseEntity<UserResponseDTO> login(@Valid @RequestBody com.macboss.macboss_api.auth.dto.LoginRequestDTO request) {
-        
-        // Manda a Cozinha processar o Login e recebe a Bandeja
         AuthResponseDTO responseTray = authService.login(request);
 
-        // Pega a pulseira nova e tranca no Cofre (Cookie)
-        org.springframework.http.HttpCookie authCookie = cookieService.createAuthCookie(responseTray.jwt());
+        // Tranca as DUAS pulseiras
+        HttpCookie accessCookie = cookieService.createAccessTokenCookie(responseTray.accessToken());
+        HttpCookie refreshCookie = cookieService.createRefreshTokenCookie(responseTray.refreshToken());
 
-        // Devolve exatamente da mesma forma: Cookie no Cabeçalho e Usuário no Corpo
-        return ResponseEntity.status(org.springframework.http.HttpStatus.OK) // Status 200 OK 
-                .header(org.springframework.http.HttpHeaders.SET_COOKIE, authCookie.toString())
+        return ResponseEntity.status(HttpStatus.OK) 
+                .header(HttpHeaders.SET_COOKIE, accessCookie.toString())
+                .header(HttpHeaders.SET_COOKIE, refreshCookie.toString()) // Envia os dois pro React
                 .body(responseTray.user());
     }
+    @PostMapping("/refresh")
+    public ResponseEntity<UserResponseDTO> refresh(@CookieValue(name = "macboss_refresh_token", required = false) String refreshToken) {
+        if (refreshToken == null) {
+            // Se o cara tentar renovar mas não trouxe o Vale-Pulseira, 401 Nele!
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        try {
+            // Manda a Cozinha renovar tudo
+            AuthResponseDTO responseTray = authService.refreshToken(refreshToken);
+
+            // Tranca as novas pulseiras nos cofres
+            HttpCookie accessCookie = cookieService.createAccessTokenCookie(responseTray.accessToken());
+            HttpCookie newRefreshCookie = cookieService.createRefreshTokenCookie(responseTray.refreshToken());
+
+            // Devolve os cofres trancados
+            return ResponseEntity.status(HttpStatus.OK)
+                    .header(HttpHeaders.SET_COOKIE, accessCookie.toString())
+                    .header(HttpHeaders.SET_COOKIE, newRefreshCookie.toString())
+                    .body(responseTray.user());
+        } catch (IllegalArgumentException e) {
+            // Se o Vale-Pulseira for falso ou estiver vencido, 401 nele também!
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+    }
+
+
     @PostMapping("/logout")
     public ResponseEntity<Void> logout() {
-        
-        // Pede a ordem de destruição do Cookie para o CookieService
-        org.springframework.http.HttpCookie clearCookie = cookieService.clearAuthCookie();
+        // Pega os dois cofres vazios e envia para destruir o que o cliente tem no navegador
+        HttpCookie[] clearCookies = cookieService.clearAuthCookies();
 
-        // Responde com o status 204 No Content (Tudo certo, não há corpo na resposta) 
-        // e o cookie vazio no cabeçalho para sobrescrever o antigo.
-        return ResponseEntity.status(org.springframework.http.HttpStatus.NO_CONTENT)
-                .header(org.springframework.http.HttpHeaders.SET_COOKIE, clearCookie.toString())
+        return ResponseEntity.status(HttpStatus.NO_CONTENT)
+                .header(HttpHeaders.SET_COOKIE, clearCookies[0].toString())
+                .header(HttpHeaders.SET_COOKIE, clearCookies[1].toString())
                 .build();
     }
+
 
 }

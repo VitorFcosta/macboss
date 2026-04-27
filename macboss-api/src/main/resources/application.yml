@@ -39,4 +39,6 @@ management:
       show-details: always
 jwt:
   secret: ${JWT_SECRET:CHAVE_DE_DESENVOLVIMENTO_GIGANTE_E_SEGURA_DO_MACBOSS_MINIMO_256_BITS}
-  expiration: 86400000 # 24 horas
+  expiration: 900000 # 15 minutos (Access Token)
+  refresh-expiration: 604800000 # 7 dias (Refresh Token)
+

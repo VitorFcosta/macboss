@@ -10,25 +10,40 @@ import java.util.Date;
 
 @Service
 public class JwtService {
-
     private final SecretKey secretKey;
     private final long expirationTimeMs;
+    private final long refreshExpirationTimeMs;
 
     // O @Value injeta as configurações do application.yml aqui pra dentro!
     public JwtService(
             @Value("${jwt.secret}") String secret,
-            @Value("${jwt.expiration}") long expirationTimeMs
+            @Value("${jwt.expiration}") long expirationTimeMs,
+            @Value("${jwt.refresh-expiration}") long refreshExpirationTimeMs
     ) {
         this.secretKey = Keys.hmacShaKeyFor(secret.getBytes());
         this.expirationTimeMs = expirationTimeMs;
+        this.refreshExpirationTimeMs = refreshExpirationTimeMs;
     }
 
-    public String generateToken(User user) {
+    // Acess token(15 minutos
+    public String generateAccessToken(User user) {
         return Jwts.builder()
                 .subject(user.getId().toString()) 
                 .claim("role", user.getRole().name()) 
+                .claim("type", "access") // Etiqueta invisível de Acesso
                 .issuedAt(new Date()) 
                 .expiration(new Date(System.currentTimeMillis() + expirationTimeMs)) 
+                .signWith(secretKey) 
+                .compact(); 
+    }
+
+    // Acess Token (7 dias)
+    public String generateRefreshToken(User user) {
+        return Jwts.builder()
+                .subject(user.getId().toString()) 
+                .claim("type", "refresh") // Etiqueta invisível de Renovação
+                .issuedAt(new Date()) 
+                .expiration(new Date(System.currentTimeMillis() + refreshExpirationTimeMs)) 
                 .signWith(secretKey) 
                 .compact(); 
     }

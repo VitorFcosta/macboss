@@ -51,7 +51,8 @@ public class AuthService {
 
         User savedUser = userRepository.save(newUser);
 
-        String token = jwtService.generateToken(savedUser);
+        String accessToken = jwtService.generateAccessToken(savedUser);
+        String refreshToken = jwtService.generateRefreshToken(savedUser);
 
         UserResponseDTO userResponse = new UserResponseDTO(
                 savedUser.getId(),
@@ -59,8 +60,8 @@ public class AuthService {
                 savedUser.getEmail(),
                 savedUser.getRole().name()
         );
+        return new AuthResponseDTO(userResponse, accessToken, refreshToken);
 
-        return new AuthResponseDTO(userResponse, token);
     }
 
     public AuthResponseDTO login(com.macboss.macboss_api.auth.dto.LoginRequestDTO dto) {
@@ -95,7 +96,8 @@ public class AuthService {
         redisTemplate.delete(redisKey);
 
         // Tudo certo! Fabrica uma nova pulseira
-        String token = jwtService.generateToken(user);
+        String accessToken = jwtService.generateAccessToken(user);
+        String refreshToken = jwtService.generateRefreshToken(user);
 
         // Prepara os dados dele
         UserResponseDTO userResponse = new UserResponseDTO(
@@ -106,6 +108,32 @@ public class AuthService {
         );
 
         // Devolve na mesma Bandeja!
-        return new AuthResponseDTO(userResponse, token);
+        return new AuthResponseDTO(userResponse, accessToken, refreshToken);
     }
+    public AuthResponseDTO refreshToken(String refreshToken) {
+        // Verifica se mandaram um token e se ele é verdadeiro
+        if (refreshToken == null || !jwtService.isTokenValid(refreshToken)) {
+            throw new IllegalArgumentException("Refresh token inválido ou expirado."); 
+        }
+
+        // Extrai de quem é esse token e busca no banco
+        String userIdStr = jwtService.extractUserId(refreshToken);
+        User user = userRepository.findById(java.util.UUID.fromString(userIdStr))
+                .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado."));
+
+        // Fabrica um par de pulseiras novinhas em folha (Token Rotation)
+        String newAccessToken = jwtService.generateAccessToken(user);
+        String newRefreshToken = jwtService.generateRefreshToken(user); 
+
+        UserResponseDTO userResponse = new UserResponseDTO(
+                user.getId(),
+                user.getName(),
+                user.getEmail(),
+                user.getRole().name()
+        );
+
+        // Devolve na bandeja
+        return new AuthResponseDTO(userResponse, newAccessToken, newRefreshToken);
+    }
+    
 }

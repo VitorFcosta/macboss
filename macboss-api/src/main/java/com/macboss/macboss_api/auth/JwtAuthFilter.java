@@ -31,7 +31,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         String token = null;
         if (request.getCookies() != null) {
             for (Cookie cookie : request.getCookies()) {
-                if ("macboss_token".equals(cookie.getName())) {
+                if ("macboss_access_token".equals(cookie.getName())) {
                     token = cookie.getValue();
                 }
             }
