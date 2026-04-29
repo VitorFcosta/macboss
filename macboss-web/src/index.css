@@ -1,1 +1,45 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;700&display=swap');
 @import "tailwindcss";
+
+@theme {
+  /* Apenas tokens que o Tailwind precisa conhecer */
+  --font-display: 'Bebas Neue', 'Arial Narrow', sans-serif;
+  --font-sans: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+:root {
+  /* ═══ SUPERFÍCIES ═══ */
+  --color-bg-primary: #FFFFFF;
+  --color-bg-secondary: #FAFAFA;
+  --color-bg-elevated: #F5F5F5;
+  --color-bg-inverse: #000000;
+
+  /* ═══ TEXTO ═══ */
+  --color-text-primary: #000000;
+  --color-text-secondary: #666666;
+  --color-text-tertiary: #999999;
+  --color-text-inverse: #FFFFFF;
+
+  /* ═══ BORDAS ═══ */
+  --color-border-default: #E5E5E5;
+  --color-border-strong: #000000;
+  --color-border-subtle: #F0F0F0;
+
+  /* ═══ FEEDBACK ═══ */
+  --color-success: #2D8C3C;
+  --color-warning: #E67E22;
+  --color-error: #CC0000;
+  --color-info: #2563EB;
+
+  /* ═══ INTERAÇÃO ═══ */
+  --color-hover-bg: #F5F5F5;
+  --color-active-bg: #EBEBEB;
+  --color-focus-ring: #000000;
+}
+
+body {
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}

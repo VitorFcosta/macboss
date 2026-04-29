@@ -33,7 +33,8 @@ public class SecurityConfig {
             // Configura as regras de permissão
             .authorizeHttpRequests(auth -> auth
                 // Rota de registrar e logar são públicas (Qualquer um acessa)
-                .requestMatchers("/api/v1/auth/register", "/api/v1/auth/login", "/api/v1/auth/logout").permitAll()
+                .requestMatchers("/api/v1/auth/register", "/api/v1/auth/login", "/api/v1/auth/logout", "/api/v1/auth/refresh").permitAll()
+
                 // Qualquer outra rota do sistema, tem que ter pulseira!
                 .anyRequest().authenticated()
             )

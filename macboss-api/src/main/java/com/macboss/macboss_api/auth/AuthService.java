@@ -136,4 +136,15 @@ public class AuthService {
         return new AuthResponseDTO(userResponse, newAccessToken, newRefreshToken);
     }
     
+    public com.macboss.macboss_api.auth.dto.UserResponseDTO getUserProfile(String userId) {
+        User user = userRepository.findById(java.util.UUID.fromString(userId))
+            .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado."));
+        return new com.macboss.macboss_api.auth.dto.UserResponseDTO(
+                user.getId(),
+                user.getName(),
+                user.getEmail(),
+                user.getRole().name()
+        );
+    }
+
 }

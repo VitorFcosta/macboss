@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpCookie;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -91,6 +92,17 @@ public class AuthController {
                 .header(HttpHeaders.SET_COOKIE, clearCookies[1].toString())
                 .build();
     }
-
+        @GetMapping("/me")
+    public ResponseEntity<UserResponseDTO> getCurrentUser(org.springframework.security.core.Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        
+        // Pega o ID que o JwtAuthFilter colocou no crachá
+        String userId = (String) authentication.getPrincipal();
+        UserResponseDTO userResponse = authService.getUserProfile(userId);
+        
+        return ResponseEntity.ok(userResponse);
+    }
 
 }
