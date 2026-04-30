@@ -1,9 +1,11 @@
-package com.macboss.macboss_api.auth;
+package com.macboss.macboss_api.auth.service;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+
+import com.macboss.macboss_api.auth.domain.User;
 
 import javax.crypto.SecretKey;
 import java.util.Date;

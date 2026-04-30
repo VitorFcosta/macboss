@@ -1,10 +1,14 @@
-package com.macboss.macboss_api.auth;
+package com.macboss.macboss_api.auth.service;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+
+import com.macboss.macboss_api.auth.domain.Role;
+import com.macboss.macboss_api.auth.domain.User;
+import com.macboss.macboss_api.auth.repository.UserRepository;
 
 @Component
 @Profile("dev")

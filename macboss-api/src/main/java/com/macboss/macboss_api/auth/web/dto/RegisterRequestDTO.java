@@ -1,4 +1,4 @@
-package com.macboss.macboss_api.auth.dto;
+package com.macboss.macboss_api.auth.web.dto;
 
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Email;

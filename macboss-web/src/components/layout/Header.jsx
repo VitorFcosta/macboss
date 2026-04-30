@@ -30,7 +30,7 @@ export default function Header() {
           to="/"
           className="absolute left-1/2 -translate-x-1/2 font-['Bebas_Neue'] text-2xl tracking-tight leading-none"
         >
-          MAC BOSS
+          MACBOSS
         </Link>
 
         {/* DIREITA — Ícones */}

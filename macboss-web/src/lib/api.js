@@ -4,7 +4,6 @@ import axios from 'axios';
 export const api = axios.create({
   // O proxy do Vite redireciona para localhost:8080 automaticamente
   baseURL: '/api/v1',
-
   // Envia e recebe cookies em todas as requisições (JWT HttpOnly)
   withCredentials: true,
   headers: {
@@ -31,6 +30,7 @@ api.interceptors.response.use(
         await api.post('/auth/refresh');
         return api(originalRequest);
       } catch (refreshError) {
+        window.location.href = '/login';
         return Promise.reject(refreshError);
       }
     }

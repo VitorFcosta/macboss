@@ -1,8 +1,12 @@
-package com.macboss.macboss_api.auth;
+package com.macboss.macboss_api.auth.service;
 
-import com.macboss.macboss_api.auth.dto.AuthResponseDTO;
-import com.macboss.macboss_api.auth.dto.RegisterRequestDTO;
-import com.macboss.macboss_api.auth.dto.UserResponseDTO;
+import com.macboss.macboss_api.auth.domain.Role;
+import com.macboss.macboss_api.auth.domain.User;
+import com.macboss.macboss_api.auth.repository.UserRepository;
+import com.macboss.macboss_api.auth.web.dto.AuthResponseDTO;
+import com.macboss.macboss_api.auth.web.dto.RegisterRequestDTO;
+import com.macboss.macboss_api.auth.web.dto.UserResponseDTO;
+
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -64,7 +68,7 @@ public class AuthService {
 
     }
 
-    public AuthResponseDTO login(com.macboss.macboss_api.auth.dto.LoginRequestDTO dto) {
+    public AuthResponseDTO login(com.macboss.macboss_api.auth.web.dto.LoginRequestDTO dto) {
         
         // ESCUDO ANTI-FORÇA BRUTA: Checa no Redis se a pessoa já errou a senha 5 vezes
         String redisKey = "login_attempts:" + dto.email();
@@ -136,10 +140,10 @@ public class AuthService {
         return new AuthResponseDTO(userResponse, newAccessToken, newRefreshToken);
     }
     
-    public com.macboss.macboss_api.auth.dto.UserResponseDTO getUserProfile(String userId) {
+    public com.macboss.macboss_api.auth.web.dto.UserResponseDTO getUserProfile(String userId) {
         User user = userRepository.findById(java.util.UUID.fromString(userId))
             .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado."));
-        return new com.macboss.macboss_api.auth.dto.UserResponseDTO(
+        return new com.macboss.macboss_api.auth.web.dto.UserResponseDTO(
                 user.getId(),
                 user.getName(),
                 user.getEmail(),

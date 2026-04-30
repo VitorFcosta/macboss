@@ -1,4 +1,4 @@
-package com.macboss.macboss_api.auth.dto;
+package com.macboss.macboss_api.auth.web.dto;
 
 import java.util.UUID;
 

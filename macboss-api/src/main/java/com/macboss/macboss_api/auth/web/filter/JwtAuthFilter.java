@@ -1,4 +1,4 @@
-package com.macboss.macboss_api.auth;
+package com.macboss.macboss_api.auth.web.filter;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -10,6 +10,8 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+
+import com.macboss.macboss_api.auth.service.JwtService;
 
 import java.io.IOException;
 import java.util.Collections;

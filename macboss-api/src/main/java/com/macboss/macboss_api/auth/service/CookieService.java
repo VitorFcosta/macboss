@@ -1,4 +1,4 @@
-package com.macboss.macboss_api.auth;
+package com.macboss.macboss_api.auth.service;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpCookie;

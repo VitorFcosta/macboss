@@ -1,4 +1,4 @@
-package com.macboss.macboss_api.auth;
+package com.macboss.macboss_api.auth.domain;
 
 import com.macboss.macboss_api.common.BaseEntity;
 import jakarta.persistence.Column;

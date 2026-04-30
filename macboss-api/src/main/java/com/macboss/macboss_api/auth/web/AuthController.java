@@ -1,8 +1,11 @@
-package com.macboss.macboss_api.auth;
+package com.macboss.macboss_api.auth.web;
 
-import com.macboss.macboss_api.auth.dto.AuthResponseDTO;
-import com.macboss.macboss_api.auth.dto.RegisterRequestDTO;
-import com.macboss.macboss_api.auth.dto.UserResponseDTO;
+import com.macboss.macboss_api.auth.service.AuthService;
+import com.macboss.macboss_api.auth.service.CookieService;
+import com.macboss.macboss_api.auth.web.dto.AuthResponseDTO;
+import com.macboss.macboss_api.auth.web.dto.RegisterRequestDTO;
+import com.macboss.macboss_api.auth.web.dto.UserResponseDTO;
+
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpCookie;
@@ -43,7 +46,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<UserResponseDTO> login(@Valid @RequestBody com.macboss.macboss_api.auth.dto.LoginRequestDTO request) {
+    public ResponseEntity<UserResponseDTO> login(@Valid @RequestBody com.macboss.macboss_api.auth.web.dto.LoginRequestDTO request) {
         AuthResponseDTO responseTray = authService.login(request);
 
         // Tranca as DUAS pulseiras

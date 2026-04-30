@@ -1,4 +1,4 @@
-package com.macboss.macboss_api.auth;
+package com.macboss.macboss_api.auth.web.filter;
 
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
