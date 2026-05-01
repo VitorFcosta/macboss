@@ -1,0 +1,19 @@
+package com.macboss.macboss_api.inventory.repository;
+
+import com.macboss.macboss_api.inventory.domain.BaseProductVariant;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+@Repository
+public interface BaseProductVariantRepository extends JpaRepository<BaseProductVariant, UUID> {
+    
+    Optional<BaseProductVariant> findBySku(String sku);
+
+    @Query("SELECT v FROM BaseProductVariant v WHERE v.availableQty <= v.minStockAlert")
+    List<BaseProductVariant> findLowStockVariants();
+}

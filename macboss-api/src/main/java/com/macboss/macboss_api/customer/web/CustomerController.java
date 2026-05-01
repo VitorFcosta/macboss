@@ -1,4 +1,4 @@
-package com.macboss.macboss_api.customer;
+package com.macboss.macboss_api.customer.web;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
