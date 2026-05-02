@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.UUID;
+
 @Entity
 @Table(name = "stock_movements")
 @Getter
@@ -15,6 +17,7 @@ public class StockMovement extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "variant_id", nullable = false)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private BaseProductVariant variant;
 
     @Column(nullable = false)
@@ -25,5 +28,8 @@ public class StockMovement extends BaseEntity {
     private StockMovementType type;
 
     @Column(length = 255)
-    private String reason;
+    private String notes;
+
+    @Column(name = "reference_id")
+    private UUID referenceId;
 }

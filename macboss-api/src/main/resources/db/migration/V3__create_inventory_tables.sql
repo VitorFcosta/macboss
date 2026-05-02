@@ -6,8 +6,9 @@ CREATE TABLE base_products (
     active BOOLEAN NOT NULL DEFAULT TRUE,
     created_by VARCHAR(255),
     last_modified_by VARCHAR(255),
-    created_at TIMESTAMP WITH TIME_ZONE NOT NULL,
-    updated_at TIMESTAMP WITH TIME_ZONE NOT NULL
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL
+
 );
 
 -- Tabela de Variantes (onde fica o estoque real)
@@ -22,8 +23,9 @@ CREATE TABLE base_product_variants (
     min_stock_alert INTEGER NOT NULL DEFAULT 5,
     created_by VARCHAR(255),
     last_modified_by VARCHAR(255),
-    created_at TIMESTAMP WITH TIME_ZONE NOT NULL,
-    updated_at TIMESTAMP WITH TIME_ZONE NOT NULL
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL
+
 );
 
 -- Tabela de Histórico de Movimentação
@@ -35,8 +37,9 @@ CREATE TABLE stock_movements (
     reason VARCHAR(255),
     created_by VARCHAR(255),
     last_modified_by VARCHAR(255),
-    created_at TIMESTAMP WITH TIME_ZONE NOT NULL,
-    updated_at TIMESTAMP WITH TIME_ZONE NOT NULL
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL
+
 );
 
 -- Índices para performance

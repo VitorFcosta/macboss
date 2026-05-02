@@ -11,28 +11,61 @@ export const api = axios.create({
   }
 });
 
+let isRefreshing = false;
+let failedQueue = [];
+
+const processQueue = (error, token = null) => {
+  failedQueue.forEach(prom => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  failedQueue = [];
+};
+
 // Interceptor de resposta: renova o token automaticamente quando recebe 401
 api.interceptors.response.use(
-  // Sucesso (2xx): deixa passar sem interferir
   (response) => response,
-
-  // Erro: nossa lógica de renovação entra aqui
   async (error) => {
     const originalRequest = error.config;
 
-    // Tenta refresh APENAS se:
-    // 1. O erro foi 401 (não autorizado)
-    // 2. A requisição que falhou NÃO era o próprio /refresh (evita loop infinito)
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
+    // Evita loop infinito se o próprio refresh der 401
+    if (originalRequest.url === '/auth/refresh') {
+      return Promise.reject(error);
+    }
 
-      try {
-        await api.post('/auth/refresh');
-        return api(originalRequest);
-      } catch (refreshError) {
-        window.location.href = '/login';
-        return Promise.reject(refreshError);
+    if ((error.response?.status === 401 || error.response?.status === 403) && !originalRequest._retry) {
+      if (isRefreshing) {
+        // Se já tem um refresh acontecendo, coloca na fila
+        return new Promise(function(resolve, reject) {
+          failedQueue.push({ resolve, reject });
+        }).then(() => {
+          return api(originalRequest);
+        }).catch(err => {
+          return Promise.reject(err);
+        });
       }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      return new Promise((resolve, reject) => {
+        api.post('/auth/refresh')
+          .then(() => {
+            processQueue(null);
+            resolve(api(originalRequest));
+          })
+          .catch((refreshError) => {
+            processQueue(refreshError);
+            window.location.href = '/login';
+            reject(refreshError);
+          })
+          .finally(() => {
+            isRefreshing = false;
+          });
+      });
     }
 
     return Promise.reject(error);
