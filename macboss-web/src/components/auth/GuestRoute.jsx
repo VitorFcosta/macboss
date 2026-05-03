@@ -1,5 +1,5 @@
 import { Navigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts/useAuth';
 
 // Rota exclusiva para visitantes (não logados)
 // Se o usuário JÁ está logado, manda direto pro Dashboard

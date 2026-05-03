@@ -1,27 +1,53 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { api } from '../lib/api';
-
-const AuthContext = createContext();
+import { AuthContext } from './auth-context';
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Função que checa silenciosamente se os cookies valem
-  const checkAuth = useCallback(async () => {
+  const loadCurrentUser = useCallback(async () => {
     try {
       const response = await api.get('/auth/me');
       setUser(response.data);
-    } catch (error) {
+    } catch {
       setUser(null);
     } finally {
       setLoading(false);
     }
   }, []);
 
+  // Função que checa silenciosamente se os cookies valem
+  const checkAuth = useCallback(async () => {
+    await loadCurrentUser();
+  }, [loadCurrentUser]);
+
   useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
+    let active = true;
+
+    async function loadAuthState() {
+      try {
+        const response = await api.get('/auth/me');
+        if (active) {
+          setUser(response.data);
+        }
+      } catch {
+        if (active) {
+          setUser(null);
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadAuthState();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   // O Gerente de Login
   const login = async (email, password) => {
@@ -48,8 +74,4 @@ export function AuthProvider({ children }) {
       {children}
     </AuthContext.Provider>
   );
-}
-
-export function useAuth() {
-  return useContext(AuthContext);
 }

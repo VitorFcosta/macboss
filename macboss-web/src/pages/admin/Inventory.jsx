@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { AlertTriangle, Plus, Clock, Trash2, Pencil } from 'lucide-react';
 import { inventoryService } from '../../lib/inventory';
 
@@ -10,7 +10,7 @@ import AdminHeader from '../../components/admin/AdminHeader';
 import StatBox from '../../components/admin/StatBox';
 
 /**
- * Retorna a cor do indicador de estoque conforme Notion 2.4:
+ * Retorna a cor do indicador de estoque:
  * Verde = disponível > threshold * 2 (saudável)
  * Amarelo = disponível > threshold mas <= threshold * 2 (atenção)
  * Vermelho = disponível <= threshold (crítico)
@@ -21,20 +21,34 @@ function stockIndicator(available, threshold) {
   return { color: '#2D8C3C', label: 'OK' };
 }
 
+const colorLabels = {
+  BLACK: 'Preto',
+  WHITE: 'Branco',
+  NAVY: 'Azul Marinho',
+  LIGHT_BLUE: 'Azul Claro',
+  GREY: 'Cinza',
+  BEIGE: 'Bege',
+  OLIVE: 'Verde Oliva',
+  BURGUNDY: 'Bordô'
+};
+
+function getColorLabel(color) {
+  return colorLabels[color] || color;
+}
+
 export default function Inventory() {
   const [variants, setVariants] = useState([]);
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedColor, setSelectedColor] = useState('');
+  const [selectedSize, setSelectedSize] = useState('');
+  const [selectedStatus, setSelectedStatus] = useState('');
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [selectedVariantForStock, setSelectedVariantForStock] = useState(null);
   const [selectedVariantForHistory, setSelectedVariantForHistory] = useState(null);
   const [selectedVariantForEdit, setSelectedVariantForEdit] = useState(null);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const [allVariants, lowStock] = await Promise.all([
@@ -48,7 +62,37 @@ export default function Inventory() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadInitialData() {
+      try {
+        const [allVariants, lowStock] = await Promise.all([
+          inventoryService.getAllVariants(),
+          inventoryService.getAlerts()
+        ]);
+
+        if (active) {
+          setVariants(allVariants);
+          setAlerts(lowStock);
+        }
+      } catch (error) {
+        console.error('Erro ao buscar dados do inventário:', error);
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadInitialData();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const handleDeactivate = async (variant) => {
     if (!confirm(`Desativar "${variant.product?.name} — ${variant.size} ${variant.color}"?`)) return;
@@ -63,6 +107,32 @@ export default function Inventory() {
 
   const formatPrice = (price) =>
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(price);
+
+  const colorOptions = useMemo(() => (
+    [...new Set(variants.map((variant) => variant.color).filter(Boolean))]
+      .sort((a, b) => getColorLabel(a).localeCompare(getColorLabel(b), 'pt-BR'))
+  ), [variants]);
+
+  const sizeOptions = useMemo(() => (
+    [...new Set(variants.map((variant) => variant.size).filter(Boolean))]
+      .sort((a, b) => a.localeCompare(b, 'pt-BR'))
+  ), [variants]);
+
+  const filteredVariants = useMemo(() => (
+    variants.filter((variant) => {
+      const isActive = variant.active !== false;
+      const matchesColor = !selectedColor || variant.color === selectedColor;
+      const matchesSize = !selectedSize || variant.size === selectedSize;
+      const matchesStatus =
+        !selectedStatus ||
+        (selectedStatus === 'active' && isActive) ||
+        (selectedStatus === 'inactive' && !isActive);
+
+      return matchesColor && matchesSize && matchesStatus;
+    })
+  ), [variants, selectedColor, selectedSize, selectedStatus]);
+
+  const hasActiveFilters = selectedColor || selectedSize || selectedStatus;
 
   return (
     <div className="min-h-screen bg-white font-['DM_Sans'] text-black p-6 md:p-12">
@@ -86,6 +156,85 @@ export default function Inventory() {
           <Plus className="w-4 h-4" />
           Nova Camisa Lisa
         </button>
+      </div>
+
+      {/* FILTROS */}
+      <div className="mb-4 border border-[#E5E5E5] bg-[#FAFAFA] px-4 py-4">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div>
+              <label htmlFor="inventory-color-filter" className="block text-[10px] font-bold uppercase tracking-[0.15em] text-[#999999] mb-1.5">
+                Cor
+              </label>
+              <select
+                id="inventory-color-filter"
+                value={selectedColor}
+                onChange={(event) => setSelectedColor(event.target.value)}
+                className="w-full min-w-44 border border-[#E5E5E5] bg-white px-3 py-2.5 text-sm font-bold text-black outline-none transition-colors focus:border-black"
+              >
+                <option value="">Todas as cores</option>
+                {colorOptions.map((color) => (
+                  <option key={color} value={color}>
+                    {getColorLabel(color)}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label htmlFor="inventory-size-filter" className="block text-[10px] font-bold uppercase tracking-[0.15em] text-[#999999] mb-1.5">
+                Tamanho
+              </label>
+              <select
+                id="inventory-size-filter"
+                value={selectedSize}
+                onChange={(event) => setSelectedSize(event.target.value)}
+                className="w-full min-w-36 border border-[#E5E5E5] bg-white px-3 py-2.5 text-sm font-bold text-black outline-none transition-colors focus:border-black"
+              >
+                <option value="">Todos os tamanhos</option>
+                {sizeOptions.map((size) => (
+                  <option key={size} value={size}>
+                    {size}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label htmlFor="inventory-status-filter" className="block text-[10px] font-bold uppercase tracking-[0.15em] text-[#999999] mb-1.5">
+                Status
+              </label>
+              <select
+                id="inventory-status-filter"
+                value={selectedStatus}
+                onChange={(event) => setSelectedStatus(event.target.value)}
+                className="w-full min-w-36 border border-[#E5E5E5] bg-white px-3 py-2.5 text-sm font-bold text-black outline-none transition-colors focus:border-black"
+              >
+                <option value="">Todos</option>
+                <option value="active">Ativas</option>
+                <option value="inactive">Inativas</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <span className="text-[11px] font-bold uppercase tracking-[0.15em] text-[#666666]">
+              {filteredVariants.length} de {variants.length} variantes
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedColor('');
+                setSelectedSize('');
+                setSelectedStatus('');
+              }}
+              disabled={!hasActiveFilters}
+              className="border border-[#E5E5E5] bg-white px-4 py-2.5 text-[11px] font-bold uppercase tracking-[0.15em] text-black transition-colors hover:border-black disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Limpar filtros
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* TABELA */}
@@ -118,8 +267,14 @@ export default function Inventory() {
                   Nenhuma variante cadastrada.
                 </td>
               </tr>
+            ) : filteredVariants.length === 0 ? (
+              <tr>
+                <td colSpan={10} className="px-6 py-10 text-center text-[11px] font-bold uppercase tracking-[0.2em] text-[#999999]">
+                  Nenhuma variante encontrada com os filtros selecionados.
+                </td>
+              </tr>
             ) : (
-              variants.map((v) => {
+              filteredVariants.map((v) => {
                 const isActive = v.active !== false;
                 const onHand = v.qtyOnHand ?? 0;
                 const reserved = v.qtyReserved ?? 0;
@@ -164,7 +319,7 @@ export default function Inventory() {
 
                     {/* Cor */}
                     <td className="px-4 py-4 text-xs font-bold uppercase text-black">
-                      {v.color}
+                      {getColorLabel(v.color)}
                     </td>
 
                     {/* Tamanho */}

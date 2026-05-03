@@ -82,8 +82,8 @@ public class InventoryService {
 
     /** Entrada de estoque (compra/reposição do fornecedor) */
     public StockMovement addEntry(StockEntryRequest request) {
-        BaseProductVariant variant = variantRepository.findById(request.variantId())
-                .orElseThrow(() -> new IllegalArgumentException("Variante não encontrada"));
+        validatePositiveQuantity(request.quantity());
+        BaseProductVariant variant = findVariantForStockUpdate(request.variantId());
 
         variant.setQtyOnHand(variant.getQtyOnHand() + request.quantity());
         variantRepository.save(variant);
@@ -94,8 +94,8 @@ public class InventoryService {
 
     /** Reserva estoque ao criar um pedido (pedido pendente) */
     public StockMovement reserveStock(UUID variantId, int quantity, UUID orderId) {
-        BaseProductVariant variant = variantRepository.findById(variantId)
-                .orElseThrow(() -> new IllegalArgumentException("Variante não encontrada"));
+        validatePositiveQuantity(quantity);
+        BaseProductVariant variant = findVariantForStockUpdate(variantId);
 
         if (variant.getAvailableQty() < quantity) {
             throw new IllegalStateException(
@@ -111,10 +111,16 @@ public class InventoryService {
 
     /** Libera estoque reservado (pedido cancelado) */
     public StockMovement releaseStock(UUID variantId, int quantity, UUID orderId) {
-        BaseProductVariant variant = variantRepository.findById(variantId)
-                .orElseThrow(() -> new IllegalArgumentException("Variante não encontrada"));
+        validatePositiveQuantity(quantity);
+        BaseProductVariant variant = findVariantForStockUpdate(variantId);
 
-        variant.setQtyReserved(Math.max(0, variant.getQtyReserved() - quantity));
+        if (variant.getQtyReserved() < quantity) {
+            throw new IllegalStateException(
+                    "Não há estoque reservado suficiente para liberar. Reservado: "
+                            + variant.getQtyReserved() + ", Solicitado: " + quantity);
+        }
+
+        variant.setQtyReserved(variant.getQtyReserved() - quantity);
         variantRepository.save(variant);
 
         return createMovement(variant, quantity, StockMovementType.RELEASE,
@@ -123,11 +129,23 @@ public class InventoryService {
 
     /** Consome estoque reservado (pedido pago, sai do físico) */
     public StockMovement consumeStock(UUID variantId, int quantity, UUID orderId) {
-        BaseProductVariant variant = variantRepository.findById(variantId)
-                .orElseThrow(() -> new IllegalArgumentException("Variante não encontrada"));
+        validatePositiveQuantity(quantity);
+        BaseProductVariant variant = findVariantForStockUpdate(variantId);
+
+        if (variant.getQtyReserved() < quantity) {
+            throw new IllegalStateException(
+                    "Não há estoque reservado suficiente para consumir. Reservado: "
+                            + variant.getQtyReserved() + ", Solicitado: " + quantity);
+        }
+
+        if (variant.getQtyOnHand() < quantity) {
+            throw new IllegalStateException(
+                    "Estoque físico insuficiente para consumir. Em mãos: "
+                            + variant.getQtyOnHand() + ", Solicitado: " + quantity);
+        }
 
         variant.setQtyOnHand(variant.getQtyOnHand() - quantity);
-        variant.setQtyReserved(Math.max(0, variant.getQtyReserved() - quantity));
+        variant.setQtyReserved(variant.getQtyReserved() - quantity);
         variantRepository.save(variant);
 
         return createMovement(variant, quantity, StockMovementType.CONSUME,
@@ -194,6 +212,17 @@ public class InventoryService {
     }
 
     // --- Helper ---
+
+    private BaseProductVariant findVariantForStockUpdate(UUID variantId) {
+        return variantRepository.findByIdForStockUpdate(variantId)
+                .orElseThrow(() -> new IllegalArgumentException("Variante não encontrada"));
+    }
+
+    private void validatePositiveQuantity(Integer quantity) {
+        if (quantity == null || quantity <= 0) {
+            throw new IllegalArgumentException("A quantidade deve ser maior que zero");
+        }
+    }
 
     private StockMovement createMovement(BaseProductVariant variant, int qty,
             StockMovementType type, String notes, UUID referenceId) {

@@ -78,7 +78,6 @@ public class AdminInventoryController {
     }
 
     // PATCH /api/v1/admin/inventory/variants/{variantId}/deactivate — soft delete
-    // (extra)
     @PatchMapping("/variants/{variantId}/deactivate")
     public ResponseEntity<Void> deactivateVariant(@PathVariable UUID variantId) {
         inventoryService.deactivateVariant(variantId);

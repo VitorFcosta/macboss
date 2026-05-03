@@ -6,3 +6,14 @@
 .idea/
 .vscode/
 .DS_Store
+
+#Refs
+Referencias/
+graphify-out/
+agents.md
+
+# Cookies e arquivos de sessão
+cookie*.txt
+cookies*.txt
+meus_cookies.txt
+

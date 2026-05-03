@@ -1,26 +1,19 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { X, Save, AlertCircle } from 'lucide-react';
 import { inventoryService } from '../../lib/inventory';
 
+function getInitialFormData(variant) {
+  return {
+    productName: variant?.product?.name || '',
+    price: variant?.price || '',
+    minStockAlert: variant?.lowStockThreshold || ''
+  };
+}
+
 export default function EditVariantModal({ variant, isOpen, onClose, onSuccess }) {
-  const [formData, setFormData] = useState({
-    productName: '',
-    price: '',
-    minStockAlert: ''
-  });
+  const [formData, setFormData] = useState(() => getInitialFormData(variant));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-
-  useEffect(() => {
-    if (isOpen && variant) {
-      setFormData({
-        productName: variant.product?.name || '',
-        price: variant.price || '',
-        minStockAlert: variant.lowStockThreshold || ''
-      });
-      setError(null);
-    }
-  }, [isOpen, variant]);
 
   if (!isOpen || !variant) return null;
 
